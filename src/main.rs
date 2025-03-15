@@ -31,11 +31,8 @@ async fn main() {
     let mut score: i32 = 0;
 
     const CAMERA_RANGE: f32 = 50.0;
-    let mut cam_position = vec3(
-        rand::gen_range(-CAMERA_RANGE, 0.),
-        rand::gen_range(0., CAMERA_RANGE),
-        rand::gen_range(-2., 2.),
-    );
+    let mut cam_position = vec3(0.,0.,0.);
+    update_camera_position(&mut cam_position, CAMERA_RANGE);
 
     const SCORE_THRESHOLD: i32 = 5;
 
@@ -131,9 +128,7 @@ async fn main() {
             size += 0.25;
             score += 1;
             if score % SCORE_THRESHOLD == 0 {
-                cam_position.x = rand::gen_range(-CAMERA_RANGE, -10.);
-                cam_position.y = rand::gen_range(10., CAMERA_RANGE);
-                cam_position.z = rand::gen_range(-2., 2.);
+                update_camera_position(&mut cam_position, CAMERA_RANGE);
             }
         }
 
@@ -163,4 +158,10 @@ async fn main() {
 fn is_touching(box_x: f32, box_y: f32, apple_x: f32, apple_y: f32, size: f32) -> bool {
     (box_x - apple_x).abs() < (size / 2. + 0.5)
         && (box_y - apple_y).abs() < (size / 2. + 0.5)
+}
+
+fn update_camera_position(cam_position: &mut Vec3, camera_range: f32) {
+    cam_position.x = rand::gen_range(-camera_range, -10.);
+    cam_position.y = rand::gen_range(10., camera_range);
+    cam_position.z = rand::gen_range(-2., 2.);
 }
