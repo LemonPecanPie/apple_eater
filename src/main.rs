@@ -59,7 +59,7 @@ async fn main() {
         // }
         // if is_key_down(KeyCode::Right)
 
-        clear_background(LIGHTGRAY);
+        clear_background(SKYBLUE);
 
         if is_key_pressed(KeyCode::Left) {
             mr_lr = 0;
@@ -102,7 +102,8 @@ async fn main() {
             ..Default::default()
         });
 
-        draw_grid((BORDER as u32) * 2, 1.0, BLACK, GRAY);
+        // draw_grid((BORDER as u32) * 2, 1.0, BLACK, GRAY);
+        draw_plane(vec3(0., 0., 0.), vec2(BORDER*1.1, BORDER*1.1), None, DARKGREEN);
 
         draw_cube(vec3(apple_y, 1., apple_x), vec3(1., 1., 1.), None, RED);
 
