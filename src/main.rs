@@ -51,6 +51,8 @@ async fn main() {
 
     const SCORE_THRESHOLD: i32 = 5;
 
+    const APPLE_SIZE: f32 = 1.0;
+
     let mut tree_positions = vec![];
     for i in 0..10 {
         tree_positions.push((
@@ -119,7 +121,12 @@ async fn main() {
             DARKGREEN,
         );
 
-        draw_cube(vec3(apple_y, 1., apple_x), vec3(1., 1., 1.), None, RED);
+        draw_cube(
+            vec3(apple_y, 1., apple_x),
+            vec3(APPLE_SIZE, APPLE_SIZE, APPLE_SIZE),
+            None,
+            RED,
+        );
 
         // draw_cube_wires(vec3(0., 1.0, -6.0), vec3(2., 2., 2.), DARKGREEN);
         // draw_cube_wires(vec3(0., 1., 6.), vec3(3., 2., 5.), DARKBLUE);
@@ -233,7 +240,12 @@ async fn main() {
             ORANGE,
         );
 
-        if is_touching(box_vec.z, box_vec.x, apple_x, apple_y, size) {
+        if is_touching(
+            box_vec,
+            vec3(size, size, size),
+            vec3(apple_y, 0., apple_x),
+            vec3(APPLE_SIZE, APPLE_SIZE, APPLE_SIZE),
+        ) {
             apple_x = rand::gen_range(-BORDER_Z, BORDER_Z);
             apple_y = rand::gen_range(-BORDER_X, BORDER_X);
             size += 0.25;
@@ -275,8 +287,14 @@ async fn main() {
     }
 }
 
-fn is_touching(box_x: f32, box_y: f32, apple_x: f32, apple_y: f32, size: f32) -> bool {
-    (box_x - apple_x).abs() < (size / 2. + 0.5) && (box_y - apple_y).abs() < (size / 2. + 0.5)
+// fn is_touching(box_x: f32, box_y: f32, apple_x: f32, apple_y: f32, size: f32) -> bool {
+//     (box_x - apple_x).abs() < (size / 2. + 0.5) && (box_y - apple_y).abs() < (size / 2. + 0.5)
+// }
+
+fn is_touching(pos1: Vec3, siz1: Vec3, pos2: Vec3, siz2: Vec3) -> bool {
+    (pos1.x - pos2.x).abs() < (siz1.x / 2. + siz2.x / 2.)
+        && (pos1.y - pos2.y).abs() < (siz1.y / 2. + siz2.y / 2.)
+        && (pos1.z - pos2.z).abs() < (siz1.z / 2. + siz2.z / 2.)
 }
 
 fn update_camera_position(cam_position: &mut Vec3, camera_range: f32) {
@@ -340,3 +358,7 @@ fn draw_farmer(x: f32, z: f32) {
         BEIGE,
     );
 }
+
+// fn is_touching(pos_1: Vec3, siz_1: Vec3, pos_2: Vec3, siz_2: Vec3) {
+
+// }
