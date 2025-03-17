@@ -4,6 +4,11 @@ use std::{
     vec,
 };
 
+enum TreeVariety {
+    Apple,
+    Banana,
+}
+
 #[macroquad::main("Apple Eater")]
 async fn main() {
     // let mut rect_x = screen_width() / 2.0 - 60.0;
@@ -20,10 +25,11 @@ async fn main() {
     // let mut box_x: f32 = 0.;
     // let mut box_y: f32 = 0.;
     let mut box_vec = vec3(0., 0., 0.);
-    let mut apple_x: f32 = rand::gen_range(-BORDER, BORDER);
-    let mut apple_y: f32 = rand::gen_range(-BORDER, BORDER);
+    let mut apple_x: f32 = rand::gen_range(-BORDER_Z, BORDER_Z);
+    let mut apple_y: f32 = rand::gen_range(-BORDER_X, BORDER_X);
     const SPEED: f32 = 0.1;
-    const BORDER: f32 = 50.0;
+    const BORDER_Z: f32 = 200.0;
+    const BORDER_X: f32 = 100.0;
     let mut size: f32 = 2.0;
 
     let mut most_recent_left_or_right = -1;
@@ -45,13 +51,16 @@ async fn main() {
 
     const SCORE_THRESHOLD: i32 = 5;
 
-    let mut tree_positions: [(f32, f32); 10] = [(0., 0.); 10];
-    for i in 0..tree_positions.len() {
-        tree_positions[i] = (
-            rand::gen_range(-BORDER, BORDER),
-            rand::gen_range(-BORDER, BORDER),
-        );
+    let mut tree_positions = vec![];
+    for i in 0..10 {
+        tree_positions.push((
+            rand::gen_range(-BORDER_X, BORDER_X),
+            rand::gen_range(-BORDER_Z, BORDER_Z),
+        ));
     }
+
+    let mut projectiles: Vec<(Vec2, Vec3, u32)> = vec![];
+    const PROJECTILE_SPEED: f32 = 0.4;
 
     loop {
         // if is_key_down(KeyCode::Left) {
@@ -103,7 +112,12 @@ async fn main() {
         });
 
         // draw_grid((BORDER as u32) * 2, 1.0, BLACK, GRAY);
-        draw_plane(vec3(0., 0., 0.), vec2(BORDER*1.1, BORDER*1.1), None, DARKGREEN);
+        draw_plane(
+            vec3(0., 0., 0.),
+            vec2(BORDER_X * 1.1, BORDER_Z * 1.1),
+            None,
+            DARKGREEN,
+        );
 
         draw_cube(vec3(apple_y, 1., apple_x), vec3(1., 1., 1.), None, RED);
 
@@ -175,16 +189,40 @@ async fn main() {
         let dist_vec_2d = vec2(dist_vec.z, dist_vec.x);
         let ang = dist_vec_2d.normalize();
 
-        println!("{:?}", ang);
+        // println!("{:?}", ang);
 
         mov_vec = ang.rotate(mov_vec).perp();
+
+        for elem in &mut projectiles {
+            draw_cube(elem.1, vec3(1., 1., 1.), None, YELLOW);
+            elem.1.z += elem.0.x;
+            elem.1.x += elem.0.y;
+            elem.2 += 1;
+        }
+
+        for i in (0..projectiles.len()).rev() {
+            if projectiles[i].2 == 300 {
+                projectiles.remove(i);
+            }
+        }
+
+        let facing_vec = vec2(1., 0.);
+        let projectile_mov_vec = ang.rotate(facing_vec).perp().perp();
+
+        if is_key_pressed(KeyCode::Space) {
+            projectiles.push((
+                projectile_mov_vec * PROJECTILE_SPEED,
+                vec3(box_vec.x, 1.0 / 2., box_vec.z),
+                0,
+            ));
+        }
         mov_vec *= SPEED;
 
         box_vec.z += mov_vec.x;
         box_vec.x += mov_vec.y;
 
-        box_vec.z = box_vec.z.clamp(-BORDER, BORDER);
-        box_vec.x = box_vec.x.clamp(-BORDER, BORDER);
+        box_vec.z = box_vec.z.clamp(-BORDER_Z, BORDER_Z);
+        box_vec.x = box_vec.x.clamp(-BORDER_X, BORDER_X);
 
         // println!("{}", box_x);
 
@@ -196,8 +234,8 @@ async fn main() {
         );
 
         if is_touching(box_vec.z, box_vec.x, apple_x, apple_y, size) {
-            apple_x = rand::gen_range(-BORDER, BORDER);
-            apple_y = rand::gen_range(-BORDER, BORDER);
+            apple_x = rand::gen_range(-BORDER_Z, BORDER_Z);
+            apple_y = rand::gen_range(-BORDER_X, BORDER_X);
             size += 0.25;
             score += 1;
             if score % SCORE_THRESHOLD == 0 {
@@ -211,9 +249,11 @@ async fn main() {
 
         // draw_tree(0., 0.);
         // draw_tree(10., 40.);
-        for elem in tree_positions {
-            draw_tree(elem.0, elem.1);
+        for elem in &tree_positions {
+            draw_tree(elem.0, elem.1, None, None, None, Some(TreeVariety::Banana));
         }
+
+        // draw_farmer(0.,0.);
 
         // draw_rectangle(rect_x, rect_y, 40.0, 40.0, GREEN);
 
@@ -244,24 +284,49 @@ fn update_camera_position(cam_position: &mut Vec3, camera_range: f32) {
     cam_position.z = rand::gen_range(-2., 2.);
 }
 
-fn draw_tree(x: f32, z: f32) {
-    const TREE_HEIGHT: f32 = 7.0;
-    const TREE_WIDTH: f32 = 3.0;
-    const LEAF_WIDTH: f32 = 5.0;
-    draw_tree_s(x, z, TREE_HEIGHT, TREE_WIDTH, LEAF_WIDTH);
-}
-
-fn draw_tree_s(x: f32, z: f32, tree_height: f32, tree_width: f32, leaf_width: f32) {
+fn draw_tree(
+    x: f32,
+    z: f32,
+    tree_height: Option<f32>,
+    tree_width: Option<f32>,
+    leaf_width: Option<f32>,
+    variety: Option<TreeVariety>,
+) {
+    let tree_height = tree_height.unwrap_or(7.0);
+    let tree_width = tree_width.unwrap_or(3.0);
+    let leaf_width = leaf_width.unwrap_or(5.0);
+    let v = variety.unwrap_or(TreeVariety::Apple);
+    let trunk_color;
+    let leaf_color;
+    match v {
+        TreeVariety::Apple => {
+            trunk_color = BROWN;
+            leaf_color = GREEN;
+        }
+        TreeVariety::Banana => {
+            trunk_color = Color::new(0.95, 0.72, 0.31, 1.);
+            leaf_color = LIME;
+        }
+    }
     draw_cube(
         vec3(x, tree_height / 2., z),
         vec3(tree_width, tree_height, tree_width),
         None,
-        BROWN,
+        trunk_color,
     );
     draw_cube(
         vec3(x, tree_height + (leaf_width / 2.), z),
         vec3(leaf_width, leaf_width, leaf_width),
         None,
-        GREEN,
+        leaf_color,
+    );
+}
+
+fn draw_farmer(x: f32, z: f32) {
+    draw_cube(
+        vec3(x, 1.0 / 2., z),
+        vec3(1.0, 1.0, 1.0),
+        None,
+        ORANGE,
     );
 }
