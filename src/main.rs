@@ -254,6 +254,7 @@ async fn main() {
         }
 
         // draw_farmer(0.,0.);
+        draw_farmer(10.0, 50.0);
 
         // draw_rectangle(rect_x, rect_y, 40.0, 40.0, GREEN);
 
@@ -323,10 +324,19 @@ fn draw_tree(
 }
 
 fn draw_farmer(x: f32, z: f32) {
+    const FARMER_SIZE: f32 = 3.0;
+    const HAT_WIDTH: f32 = 5.0;
+    const HAT_HEIGHT: f32 = 1.0;
     draw_cube(
-        vec3(x, 1.0 / 2., z),
-        vec3(1.0, 1.0, 1.0),
+        vec3(x, FARMER_SIZE / 2., z),
+        vec3(FARMER_SIZE, FARMER_SIZE, FARMER_SIZE),
         None,
-        ORANGE,
+        MAROON,
+    );
+    draw_cube(
+        vec3(x, FARMER_SIZE + HAT_HEIGHT / 2., z),
+        vec3(HAT_WIDTH, HAT_HEIGHT, HAT_WIDTH),
+        None,
+        BEIGE,
     );
 }
